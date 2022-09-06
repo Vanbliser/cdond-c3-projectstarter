@@ -13,6 +13,9 @@ commands:
             pip install --user ansible
             sudo apt-get install -y tar
             sudo apt install gzip
+            sudo npm install -g npm
+            sudo npm install -g n
+            sudo n 13.8.0
 
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -54,6 +57,7 @@ jobs:
       name: aws-cli/default
       python-version: 3.10-node
     steps:
+      - install-dependencies
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -72,6 +76,7 @@ jobs:
       name: aws-cli/default
       python-version: 3.10-node
     steps:
+      - install-dependencies
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -90,6 +95,7 @@ jobs:
       name: aws-cli/default
       python-version: 3.10-node
     steps:
+      - install-dependencies
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -105,6 +111,7 @@ jobs:
       name: aws-cli/default
       python-version: 3.10-node
     steps:
+      - install-dependencies
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -120,6 +127,7 @@ jobs:
       name: aws-cli/default
       python-version: 3.10-node
     steps:
+      - install-dependencies
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -136,6 +144,7 @@ jobs:
       name: aws-cli/default
       python-version: 3.10-node
     steps:
+      - install-dependencies
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -145,6 +154,8 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical
+            npm install --save-dev webpack@5.74.0
+            npm update mkdirp --depth 6
             npm audit --audit-level=critical
       - slack/notify:
           channel: C040GTR98GP
