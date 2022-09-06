@@ -1,0 +1,54 @@
+- name: "update apt packages"
+  become: true
+  apt:
+    update_cache: yes
+
+- name: "upgrade apt packages"
+  become: true
+  apt:
+    upgrade: "yes"
+
+- name: "Remove dependencies that are no longer required" 
+  become: true
+  apt:
+    autoremove: yes
+
+- name: "Install npm and node.js"
+  become: true
+  apt:
+    name: ["nodejs", "npm", "python3"]
+    state: latest
+    update_cache: yes 
+
+- name: "Install pm2"
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+
+- name: "create a ~/backend directory"
+  file:
+    path: ~/backend
+    state: directory
+
+- name: "copy the zipped artifact into the server"
+  become: true
+  copy:
+    src: ~/project/artifact.tar.gz
+    dest: /home/ubuntu/backend/artifact.tar.gz
+    mode: "0777"
+    backup: yes
+
+- name: "Executing Node app with PM2"
+  become: true
+  become_method: sudo
+  shell: |
+    cd /home/ubuntu/backend
+    tar xzvf artifact.tar.gz
+    npm install
+    npm run build
+    pm2 stop all
+    pm2 start npm -- start
