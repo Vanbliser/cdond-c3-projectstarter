@@ -3,17 +3,31 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.10.1
 
-#   destroy-environment:
-#     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-#     parameters:
-#       # Add parameter here   
-#     steps:
-#       - run:
-#           name: Destroy environments
-#           when: on_fail
-#           command: |
-#             # Your code here
-#             exit 1
+commands:
+  commands:
+  install-dependencies:
+    steps:
+      - run:
+          name: install dependencies
+          command: |
+            pip install --user ansible
+            sudo apt-get install -y tar
+            sudo apt install gzip
+
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7} 
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.id>>
+            aws s3 rm s3://udapeople-<<parameters.id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.id>>
 
 #   revert-migrations:
 #     description: Revert the last migration if successfully run in the current workflow.
@@ -36,8 +50,9 @@ orbs:
             
 jobs:
   build-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: 
+      name: aws-cli/default
+      python-version: 3.10-node
     steps:
       - checkout
       - restore_cache:
@@ -53,8 +68,9 @@ jobs:
           key: frontend-build
 
   build-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: 
+      name: aws-cli/default
+      python-version: 3.10-node
     steps:
       - checkout
       - restore_cache:
@@ -70,8 +86,9 @@ jobs:
           key: backend-build
 
   test-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: 
+      name: aws-cli/default
+      python-version: 3.10-node
     steps:
       - checkout
       - restore_cache:
@@ -84,8 +101,9 @@ jobs:
             npm run test
                 
   test-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: 
+      name: aws-cli/default
+      python-version: 3.10-node
     steps:
       - checkout
       - restore_cache:
@@ -98,8 +116,9 @@ jobs:
             npm run test
             
   scan-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: 
+      name: aws-cli/default
+      python-version: 3.10-node
     steps:
       - checkout
       - restore_cache:
@@ -113,8 +132,9 @@ jobs:
             npm audit --audit-level=critical
 
   scan-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: 
+      name: aws-cli/default
+      python-version: 3.10-node
     steps:
       - checkout
       - restore_cache:
@@ -148,40 +168,42 @@ jobs:
             }
   
   # deploy-infrastructure:
-  #   docker:
-  #     # Docker image here that supports AWS CLI
+  #   executor: aws-cli/default
+  #     python-version: 3.10-node
   #   steps:
-  #     # Checkout code from git
+  #     - checkout
   #     - run:
   #         name: Ensure back-end infrastructure exists
   #         command: |
   #           aws cloudformation deploy \
   #             --template-file .circleci/files/backend.yml \
-  #             #--tags project=your-tag \
-  #             # --stack-name "your back-end stack name with workflow id" \
-  #             # --parameter-overrides ID="your workflow id"  
-  #             exit 1
+  #             --tags project=${CIRCLE_WORKFLOW_ID:0:7} \
+  #             --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+  #             --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
   #     - run:
   #         name: Ensure front-end infrastructure exist
   #         command: |
   #           aws cloudformation deploy \
   #             --template-file .circleci/files/frontend.yml \
-  #             #--tags project=your-tag \
-  #             # --stack-name "your front-end stack name with workflow id" \
-  #             # --parameter-overrides ID="your workflow id"  
-  #             exit 1
+  #             --tags project=${CIRCLE_WORKFLOW_ID:0:7} \
+  #             --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+  #             --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
   #     - run:
   #         name: Add back-end ip to ansible inventory
   #         command: |
-  #           # Your code here
-  #           exit 1
+  #           aws ec2 describe-instances \
+  #             --query 'Reservations[*].Instances[*].PublicIpAddress' \
+  #             --filters "Name=tag:project,Values=${CIRCLE_WORKFLOW_ID:0:7}" \
+  #             --output text >> ~/project/.circleci/ansible/inventory.txt
+  #           cat ~/project/.circleci/ansible/inventory.txt
   #     - persist_to_workspace:
   #         root: ~/
   #         paths:
   #           - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+  #     - destroy-environment:
+  #         workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}  
 
-#   configure-infrastructure:
+#   configure-infrastructure:${CIRCLE_WORKFLOW_ID:0:7}
 #     docker:
 #       # Docker image here that supports Ansible
 #     steps:
