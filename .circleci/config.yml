@@ -510,7 +510,7 @@ workflows:
           context: my_context
           filters:
             branches:
-              only: [test-feature-branch]
+              only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
           context: my_context
