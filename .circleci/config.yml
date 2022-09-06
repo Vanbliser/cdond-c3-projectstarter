@@ -13,7 +13,6 @@ commands:
           command: |
             sudo apt update
             sudo apt -y upgrade
-            pip3 install --user ansible
             sudo apt-get install -y tar
             sudo apt install gzip
       - run:
@@ -22,9 +21,6 @@ commands:
       - run:
           name: verify packages
           command: |
-            python --version
-            pip --version
-            ansible --version
             tar --version
             gzip --version
   
@@ -63,6 +59,16 @@ commands:
 #             fi
             
 jobs:
+
+  check:
+    docker:
+      - images: python:3.10-alpine3.16
+    steps:
+      - aws-cli/setup
+      - run:
+          name: verify aws
+          command: aws iam list-users
+
   build-frontend:
     docker:
       - image: cimg/node:13.8.0
