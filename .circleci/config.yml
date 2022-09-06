@@ -3,7 +3,33 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.10.1
 
-# commands:
+commands:
+
+  slack-notify:
+    description: Notify through slack of a failed build
+    parameters:
+      message:
+        type: string
+        default: Failure to build
+    steps:
+      - slack/notify:
+          channel: C040GTR98GP
+          event: fail
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "plain_text",
+                      "text": <<parameters.message>>,
+                      "emoji": true
+                    }
+                  ]
+                }
+              ]
+            }
 #   destroy-environment:
 #     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
 #     parameters:
@@ -52,6 +78,8 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
+      - slack-notify:
+          message: Build frontend job failed
 
   build-backend:
     docker:
@@ -69,6 +97,8 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+      - slack-notify:
+          message: Build backend job failed
 
   test-frontend:
     docker:
@@ -83,6 +113,8 @@ jobs:
             cd frontend
             npm install
             npm run test
+      - slack-notify:
+          message: Test frontend job failed
                 
   test-backend:
     docker:
@@ -97,6 +129,8 @@ jobs:
             cd backend
             npm install
             npm run test
+      - slack-notify:
+          message: Test backend job failed
             
   scan-frontend:
     docker:
@@ -110,8 +144,10 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm audit --audit-level=critical
             npm audit fix --audit-level=critical -force
+            npm audit --audit-level=critical
+      - slack-notify:
+          message: Scan frontend job failed
 
   scan-backend:
     docker:
@@ -125,26 +161,10 @@ jobs:
           command: |
             cd backend
             npm install
-            npm audit --audit-level=critical
             npm audit fix --audit-level=critical --force
-      - slack/notify:
-          channel: C040GTR98GP
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "plain_text",
-                      "text": "*BACKEND AUDIT FAILED*",
-                      "emoji": true
-                    }
-                  ]
-                }
-              ]
-            }
+            npm audit --audit-level=critical
+      - slack-notify:
+          message: Scan backend job failed
   
   # deploy-infrastructure:
   #   docker:
