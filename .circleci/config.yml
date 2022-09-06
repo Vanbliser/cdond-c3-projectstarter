@@ -22,7 +22,6 @@ commands:
           name: install backend dependencies
           command: |
             cd backend
-            npm install
             npm install --save-dev nodemon@2.0.19
             npm install --save-dev jest@29.0.2
             npm install @nestjs/common@9.0.11
@@ -30,11 +29,7 @@ commands:
             npm install @nestjs/swagger@6.1.2
             npm install --save-dev ts-jest@28.0.8
             npm install express-jwt@7.7.5
-            npm update kind-of --depth 23
-            npm update y18n --depth 4
-            npm update ansi-regex --depth 15
             npm install --save-dev webpack@5.74.0
-            npm update mkdirp --depth 6
 
   npm-install-frontend:
     steps:
@@ -42,7 +37,6 @@ commands:
           name: install frontend dependencies
           command: |
             cd frontend
-            npm install
             npm install jest@29.0.2
             npm install --save-dev webpack-dev-server@4.10.1
             npm install --save-dev html-loader@4.1.0
@@ -99,6 +93,7 @@ jobs:
           name: Build front-end
           command: |
             cd frontend
+            npm install
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
@@ -118,6 +113,7 @@ jobs:
           name: Back-end build
           command: |
             cd backend
+            npm install
             npm run build
       - save_cache:
           paths: [backend/node_modules]
@@ -137,6 +133,7 @@ jobs:
           name: Run frontend test
           command: |
             cd frontend
+            npm install
             npm run test
                 
   test-backend:
@@ -153,6 +150,7 @@ jobs:
           name: Run backend test
           command: |
             cd backend
+            npm install
             npm run test
             
   scan-frontend:
@@ -169,6 +167,7 @@ jobs:
           name: Run backend test
           command: |
             cd frontend
+            npm install
             npm audit fix --audit-level=critical
             npm audit --audit-level=critical
 
@@ -186,6 +185,7 @@ jobs:
           name: Run backend test
           command: |
             cd backend
+            npm install
             npm audit fix --audit-level=critical
             npm audit --audit-level=critical
       - slack/notify:
