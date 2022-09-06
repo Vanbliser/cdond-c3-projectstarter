@@ -31,10 +31,9 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            SUCCESS=$(curl --insecure  https://kvdb.io/K7pp94DsaMkkKtgtGAzhMv/migration_<< parameters.id >>)
+            SUCCESS=$(curl --insecure  https://kvdb.io/K7pp94DsaMkkKtgtGAzhMv/migration_${CIRCLE_WORKFLOW_ID:0:7})
             echo $SUCCESS
-            # SUCCESS = 1
-            if(( $SUCCESS==1 )); 
+            if(( "$SUCCESS"=="Found" )); 
             then
               cd ~/project/backend
               npm install
@@ -267,7 +266,9 @@ jobs:
           command: |   
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-              curl -v https://kvdb.io/K7pp94DsaMkkKtgtGAzhMv/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+              curl -v https://kvdb.io/K7pp94DsaMkkKtgtGAzhMv/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d 'Found'
+            else
+              curl -v https://kvdb.io/K7pp94DsaMkkKtgtGAzhMv/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d 'Not Found'
             fi
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -399,9 +400,9 @@ jobs:
 
             if curl -v ${URL} | grep "Welcome"
             then
-              return 0
+              exit 0
             else
-              return 1
+              exit 1
             fi
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}     
