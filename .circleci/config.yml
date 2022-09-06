@@ -7,43 +7,32 @@ orbs:
 commands:
   install-dependencies:
     steps:
+      - aws-cli/setup
       - run:
           name: install dependencies
           command: |
-            pip install --user ansible
+            sudo apt update
+            sudo apt -y upgrade
+            sudo apt install software-properties-common
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt update
+            sudo apt install python3.10
+            sudo apt install python3-pip
+            pip3 install --user ansible
             sudo apt-get install -y tar
             sudo apt install gzip
-            sudo npm install -g n
-            sudo n 13.8.0
+      - run:
+          name: verify aws
+          command: aws iam list-users
+      - run:
+          name: verify packages
+          command: |
+            python --version
+            pip --version
+            ansible --version
+            tar --version
+            gzip --version
   
-  npm-install-backend:
-    steps:
-      - run:
-          name: install backend dependencies
-          command: |
-            cd backend
-            npm install --save-dev nodemon@2.0.19
-            npm install --save-dev jest@29.0.2
-            npm install @nestjs/common@9.0.11
-            npm install --save-dev standard-version@9.5.0
-            npm install @nestjs/swagger@6.1.2
-            npm install --save-dev ts-jest@28.0.8
-            npm install express-jwt@7.7.5
-            npm install --save-dev webpack@5.74.0
-
-  npm-install-frontend:
-    steps:
-      - run:
-          name: install frontend dependencies
-          command: |
-            cd frontend
-            npm install jest@29.0.2
-            npm install --save-dev webpack-dev-server@4.10.1
-            npm install --save-dev html-loader@4.1.0
-            npm update kind-of --depth 24
-            npm update acorn --depth 13
-            npm update ansi-regex --depth 7
-
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -80,13 +69,11 @@ commands:
             
 jobs:
   build-frontend:
-    executor: 
-      name: aws-cli/default
-      python-version: 3.10-node
+    docker:
+      - image: cimg/node:13.8.0
     steps:
       - install-dependencies
       - checkout
-      - npm-install-frontend
       - run:
           name: Build front-end
           command: |
@@ -98,13 +85,11 @@ jobs:
           key: frontend-build
 
   build-backend:
-    executor: 
-      name: aws-cli/default
-      python-version: 3.10-node
+    docker:
+      - image: cimg/node:13.8.0
     steps:
       - install-dependencies
       - checkout
-      - npm-install-backend
       - run:
           name: Back-end build
           command: |
@@ -116,15 +101,13 @@ jobs:
           key: backend-build
 
   test-frontend:
-    executor: 
-      name: aws-cli/default
-      python-version: 3.10-node
+    docker:
+      - image: cimg/node:13.8.0
     steps:
       - install-dependencies
       - checkout
       - restore_cache:
           keys: [frontend-build]
-      - npm-install-frontend
       - run:
           name: Run frontend test
           command: |
@@ -133,15 +116,13 @@ jobs:
             npm run test
                 
   test-backend:
-    executor: 
-      name: aws-cli/default
-      python-version: 3.10-node
+    docker:
+      - image: cimg/node:13.8.0
     steps:
       - install-dependencies
       - checkout
       - restore_cache:
           keys: [backend-build]
-      - npm-install-backend
       - run:
           name: Run backend test
           command: |
@@ -150,39 +131,37 @@ jobs:
             npm run test
             
   scan-frontend:
-    executor: 
-      name: aws-cli/default
-      python-version: 3.10-node
+    docker:
+      - image: cimg/node:13.8.0
     steps:
       - install-dependencies
       - checkout
       - restore_cache:
           keys: [frontend-build]
-      - npm-install-frontend
       - run:
           name: Run backend test
           command: |
             cd frontend
             npm install
-            npm audit fix --audit-level=critical
+            npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
 
   scan-backend:
-    executor: 
-      name: aws-cli/default
-      python-version: 3.10-node
+    docker:
+      - image: cimg/node:13.8.0
     steps:
       - install-dependencies
       - checkout
       - restore_cache:
           keys: [backend-build]
-      - npm-install-backend
       - run:
           name: Run backend test
           command: |
             cd backend
             npm install
             npm audit fix --audit-level=critical
+            npm install --save-dev webpack@5.74.0
+            npm update mkdirp --depth 6
             npm audit --audit-level=critical
       - slack/notify:
           channel: C040GTR98GP
