@@ -155,7 +155,6 @@ jobs:
             npm install --save-dev webpack@5.74.0
             npm update mkdirp --depth 6
             npm audit --audit-level=critical
-            return 1
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
