@@ -362,14 +362,15 @@ jobs:
 
   smoke-test:
     docker:
-      - image: python:3.10-alpine3.16 
+      - image: amazon/aws-cli
     steps:
       - checkout
       - aws-cli/setup
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache ansible tar gzip nodejs npm curl
+            yum install curl
+            yum install tar gzip -y
       - run:
           name: Get backend url and Backend smoke test.
           command: |
